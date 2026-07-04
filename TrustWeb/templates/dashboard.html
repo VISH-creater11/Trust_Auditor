@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trust Auditor | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        /* ═══════════════════════════════════════
+           COLOUR TOKENS
+        ═══════════════════════════════════════ */
+        :root {
+            --bg:        #07090f;
+            --surf:      #0d1624;
+            --surf2:     #111e30;
+            --surf3:     #090d16;
+            --border:    #1b2e45;
+            --cyan:      #00e5ff;
+            --orange:    #ff6b35;
+            --green:     #39ff14;
+            --yellow:    #ffd600;
+            --red:       #ff3d57;
+            --text:      #c4d9ee;
+            --muted:     #3e5c78;
+            --white:     #e8f4ff;
+        }
+
+        /* ═══════════════════════════════════════
+           BASE
+        ═══════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            background: var(--bg) !important;
+            color: var(--text) !important;
+            font-family: 'Barlow Condensed', sans-serif;
+            font-size: 16px;
+            min-height: 100vh;
+        }
+
+        /* scanline texture */
+        body::after {
+            content: '';
+            position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+            background: repeating-linear-gradient(
+                0deg, transparent, transparent 2px,
+                rgba(0,0,0,0.045) 2px, rgba(0,0,0,0.045) 4px
+            );
+        }
+
+        /* ═══════════════════════════════════════
+           NAVBAR  (replaces Bootstrap .navbar)
+        ═══════════════════════════════════════ */
+        .navbar {
+            background: var(--surf3) !important;
+            border-bottom: 1px solid var(--border) !important;
+            box-shadow: none !important;
+            padding: 0 28px !important;
+            min-height: 56px;
+        }
+
+        .navbar-brand {
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 14px !important;
+            letter-spacing: 2px !important;
+            text-transform: uppercase;
+            color: var(--cyan) !important;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* shield icon pill */
+        .navbar-brand::before {
+            content: '🛡';
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px; height: 30px;
+            background: rgba(0,229,255,.08);
+            border: 1px solid rgba(0,229,255,.3);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        /* Live Audit button */
+        .btn-warning {
+            background: linear-gradient(135deg, var(--orange), #b83b00) !important;
+            border: none !important;
+            color: #fff !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 13px !important;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 4px !important;
+            padding: 8px 20px !important;
+            transition: box-shadow .2s, transform .15s !important;
+        }
+
+        .btn-warning:hover {
+            box-shadow: 0 4px 22px rgba(255,107,53,.5) !important;
+            transform: translateY(-1px);
+            color: #fff !important;
+        }
+
+        /* ═══════════════════════════════════════
+           FLASH ALERT
+        ═══════════════════════════════════════ */
+        .alert-info {
+            background: rgba(0,229,255,.05) !important;
+            border: 1px solid rgba(0,229,255,.2) !important;
+            border-left: 3px solid var(--cyan) !important;
+            color: var(--cyan) !important;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            border-radius: 4px !important;
+        }
+
+        /* ═══════════════════════════════════════
+           SEARCH CARD
+        ═══════════════════════════════════════ */
+        .card {
+            background: var(--surf) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 8px !important;
+            box-shadow: none !important;
+        }
+
+        /* top shimmer line on first card */
+        .card.shadow-sm {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card.shadow-sm::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,229,255,.5), transparent);
+        }
+
+        /* ── form input ── */
+        .form-control {
+            background: var(--bg) !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 5px !important;
+            color: var(--text) !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 14px !important;
+            padding: 13px 16px !important;
+        }
+
+        .form-control::placeholder { color: var(--muted) !important; }
+
+        .form-control:focus {
+            border-color: rgba(0,229,255,.5) !important;
+            box-shadow: 0 0 0 3px rgba(0,229,255,.08) !important;
+            background: var(--bg) !important;
+            color: var(--text) !important;
+        }
+
+        /* ── Analyze button ── */
+        .btn-primary {
+            background: rgba(0,229,255,.08) !important;
+            border: 1px solid rgba(0,229,255,.45) !important;
+            border-radius: 5px !important;
+            color: var(--cyan) !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-weight: 700 !important;
+            font-size: 14px !important;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 13px 28px !important;
+            transition: background .2s, box-shadow .2s, transform .15s !important;
+        }
+
+        .btn-primary:hover {
+            background: rgba(0,229,255,.16) !important;
+            box-shadow: 0 0 22px rgba(0,229,255,.25) !important;
+            transform: translateY(-1px);
+            color: var(--cyan) !important;
+        }
+
+        /* ═══════════════════════════════════════
+           TABLE CARD
+        ═══════════════════════════════════════ */
+        .card.shadow {
+            border: 1px solid var(--border) !important;
+        }
+
+        .card-header {
+            background: var(--surf2) !important;
+            border-bottom: 1px solid var(--border) !important;
+            color: var(--text) !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 11px !important;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 13px 22px !important;
+        }
+
+        /* ── Table base ── */
+        .table {
+            color: var(--text) !important;
+            margin-bottom: 0 !important;
+        }
+
+        .table-hover > tbody > tr:hover > * {
+            background: rgba(0,229,255,.025) !important;
+            color: var(--text) !important;
+        }
+
+        .table-light, thead.table-light tr {
+            background: var(--surf3) !important;
+            color: var(--muted) !important;
+            border-color: var(--border) !important;
+        }
+
+        .table-light th {
+            background: var(--surf3) !important;
+            color: var(--muted) !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 10px !important;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 400 !important;
+            border-color: var(--border) !important;
+            padding: 12px 18px !important;
+        }
+
+        .table > tbody > tr > td {
+            border-color: rgba(27,46,69,.6) !important;
+            vertical-align: middle;
+            padding: 13px 18px !important;
+            background: transparent !important;
+        }
+
+        /* ── Row trust accent stripe ── */
+        .trust-high { box-shadow: inset 3px 0 0 var(--green) !important; }
+        .trust-mod  { box-shadow: inset 3px 0 0 var(--yellow) !important; }
+        .trust-low  { box-shadow: inset 3px 0 0 var(--red) !important; }
+
+        /* ── Rank ── */
+        td:first-child {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        /* ── Domain ── */
+        td strong {
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 14px;
+            color: #deeeff !important;
+            font-weight: 600 !important;
+        }
+
+        /* ── Hybrid Score ── */
+        .score-val {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        /* ── Trust badges (replaces Bootstrap .badge) ── */
+        .badge.bg-success {
+            background: rgba(57,255,20,.1) !important;
+            border: 1px solid rgba(57,255,20,.4) !important;
+            color: var(--green) !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 10px !important;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 11px !important;
+            border-radius: 20px !important;
+        }
+
+        .badge.bg-warning {
+            background: rgba(255,214,0,.1) !important;
+            border: 1px solid rgba(255,214,0,.4) !important;
+            color: var(--yellow) !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 10px !important;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 11px !important;
+            border-radius: 20px !important;
+        }
+
+        .badge.bg-danger {
+            background: rgba(255,61,87,.1) !important;
+            border: 1px solid rgba(255,61,87,.4) !important;
+            color: var(--red) !important;
+            font-family: 'Share Tech Mono', monospace !important;
+            font-size: 10px !important;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 11px !important;
+            border-radius: 20px !important;
+        }
+
+        /* ── Trend text ── */
+        .trend-up   { color: var(--green); font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+        .trend-down { color: var(--red);   font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+        .trend-flat { color: var(--muted); font-family: 'Share Tech Mono', monospace; font-size: 13px; }
+
+        /* Confidence score */
+        .conf-wrap { display: flex; align-items: center; gap: 9px; }
+        .conf-bar  {
+            width: 60px; height: 4px;
+            background: var(--border);
+            border-radius: 2px; overflow: hidden; flex-shrink: 0;
+        }
+        .conf-bar-fill {
+            height: 100%; border-radius: 2px;
+            background: linear-gradient(90deg, var(--cyan), var(--green));
+        }
+        .conf-num {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px; color: var(--text); white-space: nowrap;
+        }
+
+        /* ── Deep Scan button ── */
+        .btn-outline-dark {
+            background: transparent !important;
+            border: 1px solid var(--border) !important;
+            border-radius: 4px !important;
+            color: var(--muted) !important;
+            font-family: 'Barlow Condensed', sans-serif !important;
+            font-size: 12px !important;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600 !important;
+            padding: 6px 13px !important;
+            white-space: nowrap;
+            transition: border-color .2s, color .2s, background .2s !important;
+        }
+
+        .btn-outline-dark:hover {
+            border-color: var(--cyan) !important;
+            color: var(--cyan) !important;
+            background: rgba(0,229,255,.04) !important;
+        }
+
+        /* ── Page heading ── */
+        .page-heading {
+            margin: 28px 0 20px;
+        }
+
+        .page-eyebrow {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px; letter-spacing: 4px;
+            color: var(--muted); text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+
+        .page-title {
+            font-size: clamp(22px, 4vw, 32px);
+            font-weight: 800; text-transform: uppercase;
+            color: var(--white); line-height: 1.1;
+        }
+
+        .page-title span { color: var(--cyan); }
+
+        /* ── Bg override for Bootstrap container ── */
+        .bg-white { background: var(--surf) !important; }
+        .bg-light  { background: var(--bg) !important; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR — identical structure to original -->
+<nav class="navbar navbar-dark bg-dark mb-4">
+    <div class="container d-flex justify-content-between">
+        <span class="navbar-brand mb-0 h1">Trust Auditor Hybrid Fusion</span>
+        <a href="/live" class="btn btn-warning">⚡ Live Audit</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- FLASH MESSAGE -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- PAGE HEADING -->
+    <div class="page-heading">
+        <div class="page-eyebrow">Intelligence Dashboard</div>
+        <div class="page-title">Active Assets &amp; <span>Risk Ranking</span></div>
+    </div>
+
+    <!-- SEARCH CARD -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form action="/audit" method="POST" class="row g-3">
+                <div class="col-md-10">
+                    <input type="text" name="domain" class="form-control"
+                        placeholder="Enter domain to audit (e.g., google.com)" required>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Analyze</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="card shadow">
+        <div class="card-header bg-white fw-bold">
+            ◈ Active Assets &amp; Risk Ranking
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Domain</th>
+                        <th>Hybrid Score</th>
+                        <th>Trust Level</th>
+                        <th>Trend</th>
+                        <th>Confidence</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in results %}
+                    <tr class="{% if item.trust_level == 'High Trust' %}trust-high{% elif item.trust_level == 'Moderate Trust' %}trust-mod{% else %}trust-low{% endif %}">
+
+                        <td>#{{ item.risk_rank }}</td>
+
+                        <td><strong>{{ item.domain }}</strong></td>
+
+                        <td>
+                            <span class="score-val
+                                {% if item.hybrid_score | float >= 70 %}
+                                    " style="color:var(--green)"
+                                {% elif item.hybrid_score | float >= 40 %}
+                                    " style="color:var(--yellow)"
+                                {% else %}
+                                    " style="color:var(--red)"
+                                {% endif %}>
+                                {{ item.hybrid_score }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="badge
+                                {% if item.trust_level == 'High Trust' %}bg-success
+                                {% elif item.trust_level == 'Moderate Trust' %}bg-warning text-dark
+                                {% else %}bg-danger{% endif %}">
+                                {{ item.trust_level }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="
+                                {% if 'improv' in item.trust_trend | lower or 'up' in item.trust_trend | lower %}trend-up
+                                {% elif 'declin' in item.trust_trend | lower or 'down' in item.trust_trend | lower %}trend-down
+                                {% else %}trend-flat{% endif %}">
+                                {{ item.trust_trend }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="conf-wrap">
+                                <div class="conf-bar">
+                                    <div class="conf-bar-fill" style="width:{{ item.confidence_score }}%"></div>
+                                </div>
+                                <span class="conf-num">{{ item.confidence_score }}%</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <a href="/report/{{ item.domain }}"
+                               class="btn btn-sm btn-outline-dark">
+                               Deep Scan Report
+                            </a>
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

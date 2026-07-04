@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trust Auditor | System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #050810;
+            --surface: #0b1220;
+            --surface2: #0a1018;
+            --border: #172035;
+            --accent: #00e5ff;
+            --accent2: #ff6b35;
+            --accent3: #39ff14;
+            --text: #bdd5ea;
+            --text-dim: #3d5a73;
+            --font-mono: 'Share Tech Mono', monospace;
+            --font-ui: 'Barlow Condensed', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body { height: 100%; overflow: hidden; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-ui);
+        }
+
+        /* Scanlines */
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px);
+            pointer-events: none; z-index: 9999;
+        }
+
+        /* Animated grid */
+        .grid-bg {
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(0,229,255,0.028) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,229,255,0.028) 1px, transparent 1px);
+            background-size: 60px 60px;
+            animation: grid-drift 20s linear infinite;
+            z-index: 0;
+        }
+
+        @keyframes grid-drift {
+            from { background-position: 0 0; }
+            to   { background-position: 60px 60px; }
+        }
+
+        /* Radial center glow */
+        .glow-center {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px; height: 900px;
+            background: radial-gradient(ellipse, rgba(0,229,255,0.055) 0%, transparent 65%);
+            pointer-events: none; z-index: 1;
+        }
+
+        /* Corner brackets */
+        .corner {
+            position: fixed;
+            width: 72px; height: 72px;
+            border-color: rgba(0,229,255,0.18);
+            border-style: solid;
+            z-index: 2;
+        }
+        .corner-tl { top: 20px; left: 20px; border-width: 2px 0 0 2px; }
+        .corner-tr { top: 20px; right: 20px; border-width: 2px 2px 0 0; }
+        .corner-bl { bottom: 20px; left: 20px; border-width: 0 0 2px 2px; }
+        .corner-br { bottom: 20px; right: 20px; border-width: 0 2px 2px 0; }
+
+        /* ── MAIN STAGE ── */
+        .stage {
+            position: relative; z-index: 10;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Shield */
+        .shield-wrap {
+            margin-bottom: 28px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-10px); }
+        }
+
+        .shield-svg {
+            width: 76px; height: 76px;
+            filter: drop-shadow(0 0 22px rgba(0,229,255,0.55));
+        }
+
+        /* Title block */
+        .title-block {
+            text-align: center;
+            margin-bottom: 10px;
+            animation: fade-up 0.7s ease both;
+        }
+
+        @keyframes fade-up {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .sys-label {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 5px;
+            color: var(--accent);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .sys-label-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent3);
+            box-shadow: 0 0 7px var(--accent3);
+            animation: blink 1.4s step-end infinite;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        h1 {
+            font-size: clamp(56px, 9vw, 96px);
+            font-weight: 800;
+            line-height: 0.92;
+            text-transform: uppercase;
+            letter-spacing: -1px;
+            color: #fff;
+        }
+
+        h1 span { color: var(--accent); }
+
+        .subtitle {
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            margin-top: 16px;
+            font-family: var(--font-mono);
+            animation: fade-up 0.7s 0.15s ease both;
+        }
+
+        /* Divider */
+        .divider {
+            width: 100px; height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            margin: 36px 0 40px;
+            animation: fade-up 0.7s 0.25s ease both;
+        }
+
+        /* ── BUTTON GROUP ── */
+        .btn-group-custom {
+            display: flex;
+            gap: 20px;
+            align-items: stretch;
+            animation: fade-up 0.7s 0.35s ease both;
+        }
+
+        /* Shared base */
+        .cta-btn {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 220px;
+            padding: 28px 20px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .cta-btn:hover { transform: translateY(-4px); }
+
+        /* Shimmer sweep on hover */
+        .cta-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.12) 50%, transparent 70%);
+            transform: translateX(-120%);
+            transition: transform 0.5s ease;
+        }
+
+        .cta-btn:hover::before { transform: translateX(120%); }
+
+        /* Icon circle */
+        .btn-icon-ring {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .cta-btn:hover .btn-icon-ring { transform: scale(1.1); }
+
+        .btn-label {
+            font-family: var(--font-ui);
+            font-weight: 800;
+            font-size: 18px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            line-height: 1;
+        }
+
+        .btn-sublabel {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            opacity: 0.6;
+            margin-top: 2px;
+        }
+
+        /* ── DASHBOARD BUTTON ── */
+        .btn-dashboard {
+            background: transparent;
+            border: 1px solid rgba(0,229,255,0.4);
+            color: var(--accent);
+            box-shadow: inset 0 0 30px rgba(0,229,255,0.05), 0 0 0 0 rgba(0,229,255,0);
+        }
+
+        .btn-dashboard:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+            box-shadow: inset 0 0 30px rgba(0,229,255,0.12), 0 12px 40px rgba(0,229,255,0.25);
+        }
+
+        .btn-dashboard .btn-icon-ring {
+            background: rgba(0,229,255,0.1);
+            border: 1px solid rgba(0,229,255,0.35);
+            color: var(--accent);
+        }
+
+        /* Animated border pulse on dashboard btn */
+        .btn-dashboard::after {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: 8px;
+            border: 1px solid rgba(0,229,255,0.25);
+            animation: border-pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes border-pulse {
+            0%,100% { opacity: 0.4; transform: scale(1); }
+            50%      { opacity: 0; transform: scale(1.04); }
+        }
+
+        /* ── LIVE AUDIT BUTTON ── */
+        .btn-live {
+            background: linear-gradient(145deg, #ff7440, #cc3d00);
+            border: 1px solid rgba(255,140,80,0.3);
+            color: #fff;
+            box-shadow: 0 6px 30px rgba(255,107,53,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .btn-live:hover {
+            color: #fff;
+            box-shadow: 0 14px 50px rgba(255,107,53,0.55), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .btn-live .btn-icon-ring {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+        }
+
+        /* Lightning bolt animation inside live btn */
+        .bolt-anim {
+            position: absolute;
+            top: 10px; right: 14px;
+            font-size: 13px;
+            opacity: 0.35;
+            animation: bolt-flicker 1.8s step-end infinite;
+        }
+
+        @keyframes bolt-flicker {
+            0%,90%,100% { opacity: 0.35; }
+            92%          { opacity: 0.9; }
+        }
+
+        /* Corner chip labels */
+        .chip-label {
+            position: absolute;
+            top: 0; left: 0;
+            background: rgba(0,0,0,0.35);
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 1.5px;
+            padding: 3px 8px;
+            border-bottom-right-radius: 5px;
+            text-transform: uppercase;
+        }
+
+        .chip-cyan  { color: var(--accent); }
+        .chip-orange{ color: var(--accent2); }
+
+        /* ── STATUS BAR ── */
+        .status-bar {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: var(--surface2);
+            border-top: 1px solid var(--border);
+            padding: 10px 32px;
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            z-index: 50;
+        }
+
+        .stat { display: flex; align-items: center; gap: 7px; }
+
+        .sdot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+
+        .sdot-g { background: var(--accent3); box-shadow: 0 0 6px var(--accent3); animation: blink 1.4s step-end infinite; }
+        .sdot-c { background: var(--accent);  box-shadow: 0 0 5px var(--accent); }
+        .sdot-o { background: var(--accent2); box-shadow: 0 0 5px var(--accent2); }
+
+        .sb-spacer { flex: 1; }
+        .sb-ver { color: rgba(0,229,255,0.25); font-size: 10px; }
+
+        @media (max-width: 560px) {
+            .btn-group-custom { flex-direction: column; gap: 14px; }
+            .cta-btn { width: 240px; padding: 22px 20px 20px; }
+            h1 { font-size: 48px; }
+            .status-bar { gap: 14px; font-size: 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="glow-center"></div>
+
+<div class="corner corner-tl"></div>
+<div class="corner corner-tr"></div>
+<div class="corner corner-bl"></div>
+<div class="corner corner-br"></div>
+
+<div class="stage">
+
+    <!-- Shield -->
+    <div class="shield-wrap">
+        <svg class="shield-svg" viewBox="0 0 76 76" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M38 5L11 17V37C11 53 23.5 66.5 38 71C52.5 66.5 65 53 65 37V17L38 5Z"
+                  fill="rgba(0,229,255,0.07)" stroke="#00e5ff" stroke-width="1.5"/>
+            <path d="M38 15L19 24V37C19 49 27.5 59.5 38 63C48.5 59.5 57 49 57 37V24L38 15Z"
+                  fill="rgba(0,229,255,0.04)" stroke="rgba(0,229,255,0.35)" stroke-width="1"/>
+            <path d="M30 37L35.5 42.5L49 30" stroke="#00e5ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    </div>
+
+    <!-- Title -->
+    <div class="title-block">
+        <div class="sys-label">
+            <span class="sys-label-dot"></span>
+            System Active &nbsp;/&nbsp; Hybrid Fusion Engine
+        </div>
+        <h1>Trust<br><span>Auditor</span></h1>
+        <p class="subtitle">Domain Intelligence &amp; Risk Analysis</p>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- CTA BUTTONS -->
+    <div class="btn-group-custom">
+
+        <!-- Dashboard -->
+        <a href="/dashboard" class="cta-btn btn-dashboard">
+            <span class="chip-label chip-cyan">01</span>
+            <div class="btn-icon-ring">◈</div>
+            <div>
+                <div class="btn-label">Dashboard</div>
+                <div class="btn-sublabel">View all assets</div>
+            </div>
+        </a>
+
+        <!-- Live Audit -->
+        <a href="/live" class="cta-btn btn-live">
+            <span class="chip-label chip-orange">02</span>
+            <span class="bolt-anim">⚡</span>
+            <div class="btn-icon-ring">⚡</div>
+            <div>
+                <div class="btn-label">Live Audit</div>
+                <div class="btn-sublabel">Run full scan now</div>
+            </div>
+        </a>
+
+    </div>
+
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+    <div class="stat"><div class="sdot sdot-g"></div> ENGINE ONLINE</div>
+    <div class="stat"><div class="sdot sdot-c"></div> THREAT FEEDS ACTIVE</div>
+    <div class="stat"><div class="sdot sdot-o"></div> HYBRID FUSION READY</div>
+    <div class="sb-spacer"></div>
+    <span class="sb-ver">TRUST AUDITOR v2.0</span>
+</div>
+
+</body>
+</html>
