@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trust Auditor | Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #060a0f;
+            --surface: #0c1520;
+            --surface2: #101c2e;
+            --surface3: #0a1018;
+            --border: #172035;
+            --accent: #00e5ff;
+            --accent2: #ff6b35;
+            --accent3: #39ff14;
+            --warn: #ffd600;
+            --danger: #ff3d57;
+            --text: #b8d4ea;
+            --text-dim: #3a5570;
+            --font-mono: 'Share Tech Mono', monospace;
+            --font-ui: 'Barlow Condensed', sans-serif;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-ui);
+            font-size: 16px;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.05) 2px, rgba(0,0,0,0.05) 4px);
+            pointer-events: none; z-index: 9999;
+        }
+
+        /* TOPBAR */
+        .topbar {
+            position: sticky; top: 0;
+            background: var(--surface3);
+            border-bottom: 1px solid var(--border);
+            padding: 0 32px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 200;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--accent);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 28px; height: 28px;
+            background: rgba(0,229,255,0.1);
+            border: 1px solid rgba(0,229,255,0.3);
+            border-radius: 5px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+        }
+
+        .nav-right { display: flex; align-items: center; gap: 14px; }
+
+        .live-indicator {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot-blink {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            background: var(--accent3);
+            box-shadow: 0 0 7px var(--accent3);
+            animation: blink 1.4s step-end infinite;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+        .nav-live-btn {
+            background: linear-gradient(135deg, var(--accent2), #bb3d00);
+            border: none;
+            color: #fff;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 8px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: flex; align-items: center; gap: 6px;
+            transition: box-shadow 0.2s, transform 0.15s;
+        }
+
+        .nav-live-btn:hover {
+            box-shadow: 0 4px 20px rgba(255,107,53,0.45);
+            transform: translateY(-1px);
+            color: #fff;
+        }
+
+        /* PAGE */
+        .page {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 36px 28px 80px;
+        }
+
+        .page-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 4px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .page-title {
+            font-size: clamp(26px, 4vw, 36px);
+            font-weight: 800;
+            letter-spacing: 0px;
+            text-transform: uppercase;
+            color: #e8f4ff;
+            margin-bottom: 28px;
+            line-height: 1.1;
+        }
+
+        .page-title span { color: var(--accent); }
+
+        /* FLASH */
+        .flash-msg {
+            background: rgba(0,229,255,0.05);
+            border: 1px solid rgba(0,229,255,0.2);
+            border-left: 3px solid var(--accent);
+            padding: 12px 18px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+
+        /* SEARCH CARD */
+        .search-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 22px 26px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .search-card::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,229,255,0.5), transparent);
+        }
+
+        .search-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .search-row {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+        }
+
+        .domain-input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            color: var(--text);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            padding: 13px 18px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .domain-input::placeholder { color: var(--text-dim); }
+
+        .domain-input:focus {
+            border-color: rgba(0,229,255,0.5);
+            box-shadow: 0 0 0 3px rgba(0,229,255,0.07);
+        }
+
+        .analyze-btn {
+            background: rgba(0,229,255,0.08);
+            border: 1px solid rgba(0,229,255,0.4);
+            border-radius: 5px;
+            color: var(--accent);
+            font-family: var(--font-ui);
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            padding: 13px 30px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+        }
+
+        .analyze-btn:hover {
+            background: rgba(0,229,255,0.15);
+            box-shadow: 0 0 22px rgba(0,229,255,0.2);
+            transform: translateY(-1px);
+        }
+
+        /* TABLE CARD */
+        .table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-card-header {
+            background: var(--surface2);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-card-title {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text);
+        }
+
+        .record-count {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+
+        /* TABLE */
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .audit-table thead tr {
+            background: var(--surface3);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .audit-table th {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-dim);
+            padding: 13px 20px;
+            font-weight: 400;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .audit-table tbody tr {
+            border-bottom: 1px solid rgba(23,32,53,0.8);
+            transition: background 0.15s;
+        }
+
+        .audit-table tbody tr:hover { background: rgba(0,229,255,0.025); }
+
+        .audit-table td {
+            padding: 13px 20px;
+            font-size: 15px;
+            vertical-align: middle;
+        }
+
+        /* Row accent bars */
+        .row-high { box-shadow: inset 3px 0 0 var(--accent3); }
+        .row-mod  { box-shadow: inset 3px 0 0 var(--warn); }
+        .row-low  { box-shadow: inset 3px 0 0 var(--danger); }
+
+        /* Cell styles */
+        .rank-num {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .domain-name {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: #deeeff;
+        }
+
+        .hybrid-score {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .score-green  { color: var(--accent3); }
+        .score-yellow { color: var(--warn); }
+        .score-red    { color: var(--danger); }
+
+        .trust-pill {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 20px;
+            border: 1px solid;
+            white-space: nowrap;
+        }
+
+        .pill-high { color: var(--accent3); border-color: rgba(57,255,20,0.4);  background: rgba(57,255,20,0.06); }
+        .pill-mod  { color: var(--warn);    border-color: rgba(255,214,0,0.4);  background: rgba(255,214,0,0.06); }
+        .pill-low  { color: var(--danger);  border-color: rgba(255,61,87,0.4);  background: rgba(255,61,87,0.06); }
+
+        .trend-val { font-family: var(--font-mono); font-size: 13px; }
+        .t-up   { color: var(--accent3); }
+        .t-down { color: var(--danger); }
+        .t-flat { color: var(--text-dim); }
+
+        .conf-wrap { display: flex; align-items: center; gap: 10px; }
+
+        .conf-track {
+            width: 64px; height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .conf-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: linear-gradient(90deg, var(--accent), var(--accent3));
+        }
+
+        .conf-pct {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            color: var(--text);
+            white-space: nowrap;
+        }
+
+        .deep-btn {
+            display: inline-block;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-dim);
+            font-family: var(--font-ui);
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+            padding: 6px 14px;
+            text-decoration: none;
+            white-space: nowrap;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+        }
+
+        .deep-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(0,229,255,0.04);
+        }
+
+        .empty-state { padding: 64px 24px; text-align: center; }
+        .empty-icon  { font-size: 32px; opacity: 0.2; margin-bottom: 14px; }
+        .empty-msg   {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        @media (max-width: 768px) {
+            .topbar { padding: 0 16px; }
+            .page { padding: 20px 16px 60px; }
+            .search-row { flex-direction: column; }
+            .audit-table th, .audit-table td { padding: 11px 12px; }
+            .conf-track { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="topbar">
+    <a href="/" class="brand">
+        <div class="brand-icon">🛡</div>
+        Trust Auditor
+    </a>
+    <div class="nav-right">
+        <div class="live-indicator">
+            <span class="dot-blink"></span> LIVE
+        </div>
+        <a href="/live" class="nav-live-btn">⚡ Live Audit</a>
+    </div>
+</nav>
+
+<div class="page">
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-msg">▶ {{ messages[0] }}</div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="page-eyebrow">Intelligence Dashboard</div>
+    <h1 class="page-title">Active Assets &amp; <span>Risk Ranking</span></h1>
+
+    <div class="search-card">
+        <div class="search-label">▸ New Target Domain</div>
+        <form action="/audit" method="POST">
+            <div class="search-row">
+                <input type="text" name="domain" class="domain-input"
+                    placeholder="Enter domain to audit (e.g., google.com)"
+                    autocomplete="off" spellcheck="false" required>
+                <button type="submit" class="analyze-btn">▶ Analyze</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-card">
+        <div class="table-card-header">
+            <span class="table-card-title">◈ Asset Registry</span>
+            {% if results %}
+                <span class="record-count">{{ results | length }} RECORD{% if results | length != 1 %}S{% endif %}</span>
+            {% endif %}
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="audit-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Domain</th>
+                        <th>Hybrid Score</th>
+                        <th>Trust Level</th>
+                        <th>Trend</th>
+                        <th>Confidence</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                {% if results %}
+                    {% for item in results %}
+
+                    <tr class="{% if item.trust_level == 'High Trust' %}row-high{% elif item.trust_level == 'Moderate Trust' %}row-mod{% else %}row-low{% endif %}">
+
+                        <td><span class="rank-num">#{{ item.risk_rank }}</span></td>
+
+                        <td><span class="domain-name">{{ item.domain }}</span></td>
+
+                        <td>
+                            <span class="hybrid-score
+                                {% if item.hybrid_score | float >= 70 %}score-green
+                                {% elif item.hybrid_score | float >= 40 %}score-yellow
+                                {% else %}score-red{% endif %}">
+                                {{ item.hybrid_score }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="trust-pill
+                                {% if item.trust_level == 'High Trust' %}pill-high
+                                {% elif item.trust_level == 'Moderate Trust' %}pill-mod
+                                {% else %}pill-low{% endif %}">
+                                {{ item.trust_level }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="trend-val
+                                {% if 'improv' in item.trust_trend | lower or 'up' in item.trust_trend | lower %}t-up
+                                {% elif 'declin' in item.trust_trend | lower or 'down' in item.trust_trend | lower %}t-down
+                                {% else %}t-flat{% endif %}">
+                                {{ item.trust_trend }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="conf-wrap">
+                                <div class="conf-track">
+                                    <div class="conf-fill" style="width: {{ item.confidence_score }}%;"></div>
+                                </div>
+                                <span class="conf-pct">{{ item.confidence_score }}%</span>
+                            </div>
+                        </td>
+
+                        <td>
+                            <a href="/report/{{ item.domain }}" class="deep-btn">Deep Scan</a>
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-icon">◈</div>
+                                <div class="empty-msg">No assets audited yet — submit a domain above</div>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>
